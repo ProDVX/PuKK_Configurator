@@ -130,8 +130,22 @@
       margin-bottom: 1.25rem;
     }
 
+	.add-header-btn {
+	  width: 100%;
+      margin-top: 0.5rem;
+      padding: 0.4rem;
+      color: #252525;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: 'Source Sans 3';
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: opacity 0.15s;
+	}
+
     .generate-btn {
-      width: 100%;
+		width: 100%;
       margin-top: 2rem;
       padding: 0.85rem;
       background: var(--accent);
@@ -180,13 +194,14 @@
 
     .tooltip {
       display: none;
+	  width:fit-content;
       position: absolute;
       bottom: calc(100% + 6px);
       left: 50%;
       transform: translateX(-50%);
       background: var(--border);
       color: #FBFBFB;
-      font-size: 0.72rem;
+      font-size: 1rem;
       font-weight: 400;
       text-transform: none;
       letter-spacing: 0;
@@ -221,7 +236,7 @@
       border: 1px solid var(--border);
       color: var(--muted);
       font-family: 'Source Sans 3';
-      font-size: 0.72rem;
+      font-size: 1rem;
       padding: 0.3rem 0.7rem;
       border-radius: 4px;
       cursor: pointer;
@@ -252,7 +267,7 @@
 <body>
   <div class="container">
     <header>
-      <h1>PUKK Configurator</h1>
+      <h1>PuKK Configurator</h1>
       <p>Generate a configuration file</p>
     </header>
 
@@ -277,43 +292,153 @@
       </div>
     </div>
 
-    <hr class="divider">
-    <div class="section-label">CMS</div>
+	<hr class="divider">
 
-    <div class="form-group">
-      <label>Server Address <span class="hint">— URL or IP address</span><span class="help-icon" onclick="toggleTip(this)">?<span class="tooltip">The address of your CMS server, where the PUKK devices will send their requests</span></span></label>
-      <input type="text" id="cms_server_address" placeholder="http://192.168.1.x or http://example.com">
-      <div class="error-msg" id="err_cms"></div>
-    </div>
-
-    <hr class="divider">
     <div class="section-label">OTA</div>
 
     <div class="form-group">
-      <label>Enable automatic OTA Updates<span class="help-icon" onclick="toggleTip(this)">?<span class="tooltip">When enabled, the device will automatically download and install firmware updates.<br><br> The update can be started manually using the REST API.</span></span></label>
+      <label>Enables automatic OTA Updates
+		<span class="help-icon" onclick="toggleTip(this)">
+			?
+			<span class="tooltip">
+				When enabled, the device will automatically download and install firmware updates.
+				<br><br> 
+				The update can be started manually using the REST API.
+			</span></span></label>
       <div class="toggle-group">
-        <button class="toggle-btn active" data-field="do_ota" data-value="true">Enable</button>
-        <button class="toggle-btn" data-field="do_ota" data-value="false">Disable</button>
+        <button class="toggle-btn active" data-field="enable_ota" data-value="true">Enable</button>
+        <button class="toggle-btn" data-field="enable_ota" data-value="false">Disable</button>
       </div>
     </div>
 
-    <!-- <div class="form-group">
-      <label>OTA Address</label>
-      <input type="text" id="ota_address" placeholder="http://update-server/firmware">
-      <div class="error-msg" id="err_ota"></div>
-    </div> -->
+    <hr class="divider">
 
-	<hr class="divider">
-	<div class="section-label">Polling</div>
+	<div class="section-label">Communication Protocol</div>
 
-    <div class="form-group">
-      <label>Interval in ms</label>
-      <input type="number" id="polling_interval" placeholder="5000" value="5000">
-      <div class="error-msg" id="err_poll">Interval is required</div>
-    </div>
+	<div class="form-group">
+		<div class="toggle-group">
+		  <button class="toggle-btn active" data-field="protocol" data-value="HTTP" >HTTP(S)</button>
+		  <button class="toggle-btn" data-field="protocol" data-value="MQTT" >MQTT(S)</button>
+		</div>
+	</div>
 
-    <button class="generate-btn" onclick="generate()">Generate config.json</button>
+	<hr class="divider" >
 
+	<!-- HTTP Section -->
+	<div style="display: none;" id="http_section">
+
+		<div class="section-label">HTTP</div>
+		
+		<div class="form-group">
+			<label>Server Address 
+				<span class="hint">
+					— URL or IP address, also accepts https
+				</span><span class="help-icon" onclick="toggleTip(this)">
+					?
+					<span class="tooltip">
+						The address of your server, where the PUKK devices will send their requests
+					</span>
+				</span>
+			</label>
+			<input type="text" id="http_server_address" placeholder="http://192.168.1.x or https://example.com">
+			<div class="error-msg" id="err_server_addr"></div>
+		</div>
+		
+		<div class="form-group">
+			<label>Polling interval in ms</label>
+			<input type="number" id="polling_interval" placeholder="5000" value="5000">
+			<div class="error-msg" id="err_poll">Interval is required</div>
+		</div>
+
+		<div class="form-group">
+			<label>Authorization token
+				<span class="hint">— include for Bearer authentication</span>
+				<span class="help-icon" onclick="toggleTip(this)">
+					?
+					<span class="tooltip">
+						Token will be used in outbound requests to the server, in the Authorization header as Bearer token
+					</span>
+				</span>
+			</label>
+			<input type="text" id="http_authorization_token" placeholder="Optional">
+			<div class="error-msg" id="err_auth_token">Authorization token is invalid</div>
+		</div>
+
+		<div class="form-group">
+			<label>Custom headers 
+				<span class="help-icon" onclick="toggleTip(this)">
+					?
+					<span class="tooltip">
+						Custom headers to be sent with the HTTP requests, in JSON format
+					</span>
+				</span>
+			</label>
+			<ul id="http_custom_headers_list">			
+				<!-- Custom headers will be added here -->
+			</ul>
+			
+			<button class="add-header-btn" onclick="addCustomHeader()">Add a custom header</button>
+		</div>		
+	</div>
+
+	<!-- MQTT Section -->
+
+	<div style="display: none;" id="mqtt_section">
+		<div class="section-label">MQTT</div>
+
+		<div class="form-group">
+			<label> Broker address 
+				<span class="hint">— URL or IP address excluding port 
+					<span class="help-icon" onclick="toggleTip(this)">
+						?
+						<span class="tooltip">	
+							The address of your MQTT broker, where the PUKK devices will send their messages. 
+							Use the format mqtt://broker.address or mqtts://broker.address for secure connections.
+						</span>					
+					</span>
+				</span>
+			</label>
+			<input type="text" id="mqtt_broker_address" placeholder="mqtt://broker.address">
+			<div class="error-msg" id="err_mqtt_addr"></div>
+		</div>
+
+		<div class="form-group">
+			<label> 
+				Broker port
+				<span class="hint">— default is 1883 for MQTT and 8883 for MQTTS</span>
+			</label>
+			<input type="number" id="mqtt_broker_port" placeholder="1883">
+			<div class="error-msg" id="err_mqtt_port"></div>
+		</div>
+
+		<div class="form-group">
+			<label>Username</label>
+			<input type="text" id="mqtt_username" placeholder="Optional">
+			<div class="error-msg" id="err_mqtt_username"></div>
+		</div>
+
+		<div class="form-group">
+			<label>Password</label>
+			<input type="password" id="mqtt_password" placeholder="Optional">
+			<div class="error-msg" id="err_mqtt_password"></div>
+		</div>
+
+		<div class="form-group">
+			<label>Topic prefix 
+				<span class="help-icon" onclick="toggleTip(this)">
+					?
+					<span class="tooltip">
+						The prefix for the MQTT topics
+					</span>
+				</span>
+			</label>
+			<input type="text" id="mqtt_topic_prefix" placeholder="pukk/">
+			<div class="error-msg" id="err_mqtt_topic_prefix"></div>
+		</div>
+	</div>
+	
+	<!-- Final section 	-->
+	<button class="generate-btn" onclick="generate()">Generate config.json</button>
     <div class="output-section" id="output">
       <div class="output-header">
         <span>output</span>
@@ -330,26 +455,41 @@
   <script>
     const state = {
       wifi_hidden: false,
-      do_ota: true
+      enable_ota: true,
+      protocol: 'HTTP',
+
+	  custom_headers: []
     };
 
 	let current_config = null;
 
+	setup();
+
+
     document.querySelectorAll('.toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const field = btn.dataset.field;
-        const value = btn.dataset.value === 'true';
+        const value = btn.dataset.value;
+		console.log('Setting', field, 'to', value);
         state[field] = value;
         document.querySelectorAll(`[data-field="${field}"]`).forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+
+		if(field === 'protocol') {
+			updateProtocolSection();
+		}
       });
     });
 
     // Clear errors on input
     document.getElementById('wifi_ssid').addEventListener('input', () => clearError('wifi_ssid', 'err_ssid'));
 	document.getElementById('polling_interval').addEventListener('input', () => clearError('polling_interval', 'err_poll'));
-    document.getElementById('cms_server_address').addEventListener('input', () => clearError('cms_server_address', 'err_cms'));
-    //    document.getElementById('ota_address').addEventListener('input', () => clearError('ota_address', 'err_ota'));
+    document.getElementById('http_server_address').addEventListener('input', () => clearError('http_server_address', 'err_server_addr'));
+    document.getElementById('http_authorization_token').addEventListener('input', () => clearError('http_authorization_token', 'err_auth_token'));
+
+	function setup() {
+		updateProtocolSection();
+	}
 
     function setError(inputId, errId, msg) {
       document.getElementById(inputId).classList.add('invalid');
@@ -363,10 +503,31 @@
       document.getElementById(errId).classList.remove('visible');
     }
 
+	function addCustomHeader() {
+		state.custom_headers.push({ header: '', value: '' });
+		renderCustomHeaders();
+	}
+
+	function renderCustomHeaders() {
+		const ul = document.querySelector('#http_custom_headers_list');
+		ul.innerHTML = state.custom_headers.map((h, i) => `
+			<div style="display: flex; gap: 0.5rem; padding: 0.5rem 0rem;">
+				<input type="text" placeholder="CustomHeader" value="${h.header}" 
+						oninput="state.custom_headers[${i}].header = this.value">
+				<input type="text" placeholder="HeaderValue" value="${h.value}" 
+						oninput="state.custom_headers[${i}].value = this.value">
+			</div>`
+		).join('');
+	}
+
     function isValidURL(val) {
       try {
         const u = new URL(val);
-        return u.protocol === 'http:' || u.protocol === 'https:';
+		if (state.protocol === 'MQTT') {
+			return u.protocol === 'mqtt:' || u.protocol === 'mqtts:';
+		} else if (state.protocol === 'HTTP') {
+			return u.protocol === 'http:' || u.protocol === 'https:';
+		}
       } catch { return false; }
     }
 
@@ -378,43 +539,105 @@
     }
 
     function validate() {
-      let valid = true;
+		let valid = true;
 
-      // SSID: required
-      const ssid = document.getElementById('wifi_ssid').value.trim();
-      if (!ssid) {
-        setError('wifi_ssid', 'err_ssid', 'SSID is required');
-        valid = false;
-      }
+		// SSID: required
+		const ssid = document.getElementById('wifi_ssid').value.trim();
+		if (!ssid) {
+			setError('wifi_ssid', 'err_ssid', 'SSID is required');
+			valid = false;
+		}
 
-      // Password: no restrictions (open network allowed)
+		// Requirements for HTTP protocol
+		if (state.protocol === "HTTP") {
+			// HTTP server address: if non-empty, must be a valid URL or IP
+			const http_addr = document.getElementById('http_server_address').value.trim();
+			if (!http_addr) {
+				setError('http_server_address', 'err_server_addr', 'Server address is required');
+				valid = false;
+			} else
+			if (http_addr && !isValidURL(http_addr) && !isValidIP(http_addr)) {
+				setError('http_server_address', 'err_server_addr', 'Must be a valid HTTP URL (http://...) or IPv4 address');
+				valid = false;
+			}
 
-      // CMS server address: if non-empty, must be a valid URL or IP
-      const cms = document.getElementById('cms_server_address').value.trim();
-      if (cms && !isValidURL(cms) && !isValidIP(cms)) {
-        setError('cms_server_address', 'err_cms', 'Must be a valid URL (http://...) or IPv4 address');
-        valid = false;
-      }
+			const auth_token = document.getElementById('http_authorization_token').value.trim();
+			// Authorization token: optional, but should be valid if provided (alphanumeric, dashes, underscores)
+			if (auth_token && !/^[\w-]+$/.test(auth_token)) {
+				setError('http_authorization_token', 'err_auth_token', 'Authorization token must be alphanumeric, dashes, or underscores');
+				valid = false;
+			}
 
-      // OTA address: if non-empty, must be a valid URL or IP
-      // const ota = document.getElementById('ota_address').value.trim();
-      // if (ota && !isValidURL(ota) && !isValidIP(ota)) {
-      //   setError('ota_address', 'err_ota', 'Must be a valid URL (http://...) or IPv4 address');
-      //   valid = false;
-      // }
+		}
+
+		// Requirements for MQTT protocol
+		if (state.protocol === "MQTT") {
+			const mqtt_addr = document.getElementById('mqtt_broker_address').value.trim();
+			if (!mqtt_addr) {
+				setError('mqtt_broker_address', 'err_mqtt_addr', 'Broker address is required');
+				valid = false;
+			} else if (!isValidURL(mqtt_addr) && !isValidIP(mqtt_addr)) {
+				setError('mqtt_broker_address', 'err_mqtt_addr', 'Must be a valid MQTT URL (mqtt://...) or IPv4 address');
+				valid = false;
+			}
+
+			const mqtt_port = document.getElementById('mqtt_broker_port').value.trim();
+			if (!mqtt_port) {
+				setError('mqtt_broker_port', 'err_mqtt_port', 'Broker port is required');
+				valid = false;
+			} else if (isNaN(mqtt_port) || parseInt(mqtt_port) < 1 || parseInt(mqtt_port) > 65535) {
+				setError('mqtt_broker_port', 'err_mqtt_port', 'Broker port must be a number between 1 and 65535');
+				valid = false;	
+			}
+
+			const mqtt_topic_prefix = document.getElementById('mqtt_topic_prefix').value.trim();
+			if (!mqtt_topic_prefix) {
+				setError('mqtt_topic_prefix', 'err_mqtt_topic_prefix', 'Topic prefix is required');
+				valid = false;
+			} else if (!/^[\w/-]+$/.test(mqtt_topic_prefix) || !mqtt_topic_prefix.endsWith('/')) {
+				setError('mqtt_topic_prefix', 'err_mqtt_topic_prefix', 'Topic prefix must be alphanumeric, dashes, underscores, or slashes' + ' and must end with a slash');
+				valid = false;
+			}
+		}
 
       return valid;
     }
+
+	function getHeaders() {
+		let headers = [];
+
+		state.custom_headers.forEach((header, index) => {
+			const headerInput = document.querySelector(`#http_custom_headers_list div:nth-child(${index + 1}) input:nth-child(1)`);
+			const valueInput = document.querySelector(`#http_custom_headers_list div:nth-child(${index + 1}) input:nth-child(2)`);
+
+			if (headerInput && valueInput) {
+				const headerName = headerInput.value.trim();
+				const headerValue = valueInput.value.trim();
+
+				if (headerName && headerValue) {
+					headers.push(`${headerName}: ${headerValue}`);
+				}
+			}
+		});
+		return headers;
+	}
 
     function buildConfig() {
       return {
         wifi_ssid: document.getElementById('wifi_ssid').value,
         wifi_pass: document.getElementById('wifi_pass').value,
         wifi_hidden: state.wifi_hidden,
-        cms_server_address: document.getElementById('cms_server_address').value,
-        do_ota: state.do_ota,
-		poll_interval_ms: parseInt(document.getElementById('polling_interval').value || 5000, 10)
-        //ota_address: document.getElementById('ota_address').value
+        enable_ota: state.do_ota,
+		protocol: state.protocol,
+        http_server_address: document.getElementById('http_server_address').value,
+		http_poll_interval_ms: parseInt(document.getElementById('polling_interval').value || 5000, 10),
+        http_authorization_token: document.getElementById('http_authorization_token').value,
+		http_custom_headers: getHeaders(), // This will need to be updated to read the actual values from the input fields
+		mqtt_broker: document.getElementById('mqtt_broker_address').value,
+		mqtt_port: parseInt(document.getElementById('mqtt_broker_port').value || 1883, 10),
+		mqtt_username: document.getElementById('mqtt_username').value,
+		mqtt_password: document.getElementById('mqtt_password').value,
+		mqtt_topic_prefix: document.getElementById('mqtt_topic_prefix').value
       };
     }
 
@@ -446,15 +669,21 @@
       if (!isOpen) el.classList.add('open');
     }
 
+	function updateProtocolSection() {
+		console.log('Updating protocol section to', state.protocol);
+		document.getElementById('http_section').style.display = (state.protocol === 'HTTP') ? 'block' : 'none';
+		document.getElementById('mqtt_section').style.display = (state.protocol === 'MQTT') ? 'block' : 'none';
+	}
+
     document.addEventListener('click', e => {
       if (!e.target.closest('.help-icon')) {
         document.querySelectorAll('.help-icon.open').forEach(i => i.classList.remove('open'));
       }
     });
 
-	function writeToNfc() {
-		NfcBridge.writeToNfc(JSON.stringify(current_config));
-	}
+	// function writeToNfc() {
+	// 	NfcBridge.writeToNfc(JSON.stringify(current_config));
+	// }
   </script>
 </body>
 </html>
